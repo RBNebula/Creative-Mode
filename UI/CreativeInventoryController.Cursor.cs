@@ -342,8 +342,7 @@ internal sealed partial class CreativeInventoryController
             return false;
         }
 
-        return _pendingCursorTool.GetType() == prefabTool.GetType() &&
-            _pendingCursorTool.Name == prefabTool.Name;
+        return AreSameHeldToolKind(_pendingCursorTool, prefabTool);
     }
 
     private bool TryCreatePendingCursorTool(ShopItemDefinition definition, out BaseHeldTool tool)
@@ -452,7 +451,7 @@ internal sealed partial class CreativeInventoryController
             return existingBuilder.Definition == pendingBuilder.Definition;
         }
 
-        return existingTool.Name == pendingTool.Name;
+        return AreSameHeldToolKind(existingTool, pendingTool);
     }
 
     private void UpdatePendingCursorGhost()
@@ -581,7 +580,7 @@ internal sealed partial class CreativeInventoryController
             Object.Destroy(toolToDrop.gameObject);
             if (!spawnedCrate)
             {
-                _logger.LogWarning($"{ModInfo.LOG_PREFIX} Failed to drop pending building item '{builder.Name}' into the world.");
+                _logger.LogWarning($"{ModInfo.LOG_PREFIX} Failed to drop pending building item '{GetHeldToolDisplayName(builder)}' into the world.");
             }
 
             return;
@@ -613,5 +612,43 @@ internal sealed partial class CreativeInventoryController
         }
 
         return null;
+    }
+
+    private static bool AreSameHeldToolKind(BaseHeldTool left, BaseHeldTool right)
+    {
+        if (left == null || right == null || left.GetType() != right.GetType())
+        {
+            return false;
+        }
+
+        SavableObjectID leftId = left.GetSavableObjectID();
+        SavableObjectID rightId = right.GetSavableObjectID();
+        if (leftId != SavableObjectID.INVALID || rightId != SavableObjectID.INVALID)
+        {
+            return leftId == rightId;
+        }
+
+        return string.Equals(left.GetName(), right.GetName(), StringComparison.Ordinal);
+    }
+
+    private static string GetHeldToolDisplayName(BaseHeldTool tool)
+    {
+        if (tool == null)
+        {
+            return "Unknown";
+        }
+
+        string name = tool.GetName();
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            return name;
+        }
+
+        if (!string.IsNullOrWhiteSpace(tool.FallbackName))
+        {
+            return tool.FallbackName;
+        }
+
+        return tool.GetType().Name;
     }
 }

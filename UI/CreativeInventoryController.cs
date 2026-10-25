@@ -739,8 +739,9 @@ internal sealed partial class CreativeInventoryController : System.IDisposable
 
     private Button CreateCategoryTabButton(Transform parent, ShopCategory category)
     {
+        string categoryName = GetCategoryDisplayName(category);
         GameObject buttonObject = CreateUiObject(
-            "CategoryTab_" + CreativeNameUtils.SanitizeName(category.CategoryName, "Category"),
+            "CategoryTab_" + CreativeNameUtils.SanitizeName(categoryName, "Category"),
             parent,
             typeof(Image),
             typeof(Button),
@@ -785,14 +786,15 @@ internal sealed partial class CreativeInventoryController : System.IDisposable
 
         button.onClick.AddListener(() => SelectCategory(category));
         CreativeHoverTooltipTarget tooltipTarget = buttonObject.AddComponent<CreativeHoverTooltipTarget>();
-        tooltipTarget.Initialize(_hoverTooltip, category.CategoryName);
+        tooltipTarget.Initialize(_hoverTooltip, categoryName);
         return button;
     }
 
     private RectTransform CreateCategoryItemPage(Transform parent, ShopCategory category)
     {
+        string categoryName = GetCategoryDisplayName(category);
         GameObject pageObject = CreateUiObject(
-            "ItemsPage_" + CreativeNameUtils.SanitizeName(category.CategoryName, "Category"),
+            "ItemsPage_" + CreativeNameUtils.SanitizeName(categoryName, "Category"),
             parent,
             typeof(GridLayoutGroup),
             typeof(ContentSizeFitter));
@@ -1098,6 +1100,32 @@ internal sealed partial class CreativeInventoryController : System.IDisposable
         }
 
         return null;
+    }
+
+    private static string GetCategoryDisplayName(ShopCategory category)
+    {
+        if (category == null)
+        {
+            return "Category";
+        }
+
+        string categoryName = category.GetCategoryName();
+        if (!string.IsNullOrWhiteSpace(categoryName))
+        {
+            return categoryName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(category.FallbackCategoryName))
+        {
+            return category.FallbackCategoryName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(category.CategoryID))
+        {
+            return category.CategoryID;
+        }
+
+        return "Category";
     }
 
 }
